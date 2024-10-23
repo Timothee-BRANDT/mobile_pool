@@ -32,7 +32,7 @@ export default function HomeScreen() {
         {[
           ['7', '8', '9', 'C', 'AC'],
           ['4', '5', '6', '+', '-'],
-          ['1', '2', '3', '×', '÷'],
+          ['1', '2', '3', 'x', '÷'],
           ['0', '.', '00', '=', ''],
         ].map((row, rowIndex) => (
           <View key={rowIndex} style={styles.row}>
