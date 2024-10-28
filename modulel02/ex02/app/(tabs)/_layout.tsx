@@ -8,50 +8,127 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import * as Location from 'expo-location';
 import axios from 'axios';
 
-function CurrentlyScreen({ searchQuery, coordinates, weatherData }: { searchQuery: string, coordinates: string | null, weatherData: any }) {
+export type viewProps = {
+    searchQuery: string,
+    coordinates: string | null,
+    weatherData?: any,
+    city: string,
+    country: string,
+    region: string,
+    lat: number,
+    lon: number,
+}
+
+function CurrentlyScreen({ city, region, country, lat, lon }: viewProps) {
+    const [weatherData, setWeatherData] = useState<any | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchWeatherData = async () => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                const response = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+                setWeatherData(response.data);
+            } catch (err) {
+                console.error('Erreur lors de la récupération des données météo :', err);
+                setError('Unable to fetch weather data');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (lat && lon) {
+            fetchWeatherData();
+        }
+    }, [lat, lon]);
+
     return (
         <View style={styles.container}>
             <Text>Currently</Text>
-            <Text>{searchQuery}</Text>
-            {coordinates && <Text>Coordinates: {coordinates}</Text>}
-            {weatherData && (
-                <>
-                    <Text>Temperature: {weatherData.current_weather.temperature}°C</Text>
-                    <Text>Wind Speed: {weatherData.current_weather.windspeed} km/h</Text>
-                </>
-            )}
+            {loading && <Text>Loading weather data...</Text>}
+            <Text>City : {city}</Text>
+            <Text>Country: {country}</Text>
+            <Text>Region: {region}</Text>
+            {error && <Text>{error}</Text>}
         </View>
     );
 }
 
-function TodayScreen({ searchQuery, coordinates, weatherData }: { searchQuery: string, coordinates: string | null, weatherData: any }) {
+function TodayScreen({ city, region, country, lat, lon }: viewProps) {
+    const [weatherData, setWeatherData] = useState<any | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchWeatherData = async () => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                const response = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+                setWeatherData(response.data);
+            } catch (err) {
+                console.error('Erreur lors de la récupération des données météo :', err);
+                setError('Unable to fetch weather data');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (lat && lon) {
+            fetchWeatherData();
+        }
+    }, [lat, lon]);
+
     return (
         <View style={styles.container}>
             <Text>Today</Text>
-            <Text>{searchQuery}</Text>
-            {coordinates && <Text>Coordinates: {coordinates}</Text>}
-            {weatherData && (
-                <>
-                    <Text>Temperature: {weatherData.current_weather.temperature}°C</Text>
-                    <Text>Wind Speed: {weatherData.current_weather.windspeed} km/h</Text>
-                </>
-            )}
+            {loading && <Text>Loading weather data...</Text>}
+            <Text>City : {city}</Text>
+            <Text>Country: {country}</Text>
+            <Text>Region: {region}</Text>
+            {error && <Text>{error}</Text>}
         </View>
     );
 }
 
-function WeeklyScreen({ searchQuery, coordinates, weatherData }: { searchQuery: string, coordinates: string | null, weatherData: any }) {
+function WeeklyScreen({ city, region, country, lat, lon }: viewProps) {
+    const [weatherData, setWeatherData] = useState<any | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchWeatherData = async () => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                const response = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+                setWeatherData(response.data);
+            } catch (err) {
+                console.error('Erreur lors de la récupération des données météo :', err);
+                setError('Unable to fetch weather data');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (lat && lon) {
+            fetchWeatherData();
+        }
+    }, [lat, lon]);
+
     return (
         <View style={styles.container}>
             <Text>Weekly</Text>
-            <Text>{searchQuery}</Text>
-            {coordinates && <Text>Coordinates: {coordinates}</Text>}
-            {weatherData && (
-                <>
-                    <Text>Temperature: {weatherData.current_weather.temperature}°C</Text>
-                    <Text>Wind Speed: {weatherData.current_weather.windspeed} km/h</Text>
-                </>
-            )}
+            {loading && <Text>Loading weather data...</Text>}
+            <Text>City : {city}</Text>
+            <Text>Country: {country}</Text>
+            <Text>Region: {region}</Text>
+            {error && <Text>{error}</Text>}
         </View>
     );
 }
@@ -61,30 +138,24 @@ export default function TabLayout() {
     const layout = useWindowDimensions();
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [suggestions, setSuggestions] = useState<any[]>([]);
-    const [weatherData, setWeatherData] = useState<any | null>(null);
     const [coordinates, setCoordinates] = useState<string | null>(null);
+    const [city, setCity] = useState('');
+    const [country, setCountry] = useState('');
+    const [region, setRegion] = useState('');
     const [index, setIndex] = useState(0);
+    const [lat, setLat] = useState(0);
+    const [lon, setLon] = useState(0);
     const [routes] = useState([
         { key: 'currently', title: 'Currently', icon: 'cloud' },
         { key: 'today', title: 'Today', icon: 'today' },
         { key: 'weekly', title: 'Weekly', icon: 'calendar' },
     ]);
 
-    // Get Weather by passing the coordinates
-    const fetchWeatherByCoordinates = async (lat: number, lon: number) => {
-        try {
-            const response = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
-            setWeatherData(response.data);
-        } catch (error) {
-            console.error("Erreur lors de la récupération des données météo :", error);
-        }
-    };
-
-    // Search list results
+    // Search list results (If search for Paris, return a list of results for Paris)
     const fetchGeocodingSuggestions = async (query: string) => {
         try {
             const response = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${query}`);
-            console.log('*************\n', response.data.results);
+            // console.log('*************\n', response.data.results);
             const results = response.data.results.map((item: any) => ({
                 city: item.name,
                 country: item.country,
@@ -116,8 +187,12 @@ export default function TabLayout() {
                 if (result) {
                     const lat = result.latitude;
                     const lon = result.longitude;
+                    setLat(lat);
+                    setLon(lon);
+                    setRegion(result.admin1);
+                    setCountry(result.country);
+                    setCity(searchQuery);
                     setCoordinates(`${lat}, ${lon}`);
-                    fetchWeatherByCoordinates(lat, lon);
                     setSuggestions([]);
                 } else {
                     Alert.alert("Aucune ville trouvée", "Nous n'avons pas trouvé cette ville.");
@@ -129,12 +204,15 @@ export default function TabLayout() {
         }
     };
 
-
     // Handle the selection in the suggestion list
     const handleCitySelect = (city: any) => {
         setSearchQuery(city.city);
         setCoordinates(`${city.lat}, ${city.lon}`);
-        fetchWeatherByCoordinates(city.lat, city.lon);
+        setLat(city.lat);
+        setLon(city.lon);
+        setCity(city.city);
+        setCountry(city.country);
+        setRegion(city.region);
         setSuggestions([]);
     };
 
@@ -147,20 +225,38 @@ export default function TabLayout() {
         }
 
         let location = await Location.getCurrentPositionAsync({});
-        const lat = location.coords.latitude;
-        const lon = location.coords.longitude;
-        setCoordinates(`${lat}, ${lon}`);
-        fetchWeatherByCoordinates(lat, lon);
+        const latitude = location.coords.latitude;
+        const longitude = location.coords.longitude;
+        setLat(latitude);
+        setLon(longitude);
+        setCoordinates(`${latitude}, ${longitude}`);
+        try {
+            const response = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`, {
+                headers: {
+                    'User-Agent': 'ex02/1.0 (brandt.timothee@gmail.com)',
+                },
+            });
+            if (response.data && response.data.address) {
+                setCountry(response.data.address.country);
+                setCity(response.data.address.city);
+                setRegion(response.data.address.state);
+            }
+        } catch (err) {
+            console.error("Erreur lors de la récupération de la ville :", err);
+        }
     };
 
     const renderScene = ({ route }: any) => {
         switch (route.key) {
             case 'currently':
-                return <CurrentlyScreen searchQuery={searchQuery} coordinates={coordinates} weatherData={weatherData} />;
+                return <CurrentlyScreen searchQuery={searchQuery} coordinates={coordinates} city={city}
+                    country={country} region={region} lat={lat} lon={lon} />;
             case 'today':
-                return <TodayScreen searchQuery={searchQuery} coordinates={coordinates} weatherData={weatherData} />;
+                return <TodayScreen searchQuery={searchQuery} coordinates={coordinates} city={city}
+                    country={country} region={region} lat={lat} lon={lon} />;
             case 'weekly':
-                return <WeeklyScreen searchQuery={searchQuery} coordinates={coordinates} weatherData={weatherData} />;
+                return <WeeklyScreen searchQuery={searchQuery} coordinates={coordinates} city={city}
+                    country={country} region={region} lat={lat} lon={lon} />;
             default:
                 return null;
         }
