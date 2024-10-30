@@ -17,6 +17,7 @@ export type viewProps = {
     region: string,
     lat: number,
     lon: number,
+    error: string,
 }
 
 export type currentWeather = {
@@ -29,13 +30,13 @@ export type currentWeather = {
     windspeed: number,
 }
 
-type weatherData = {
+export type weatherData = {
     time: string[];
     temperature_2m: number[];
     wind_speed_10m: number[];
 };
 
-type weatherDataWeekly = {
+export type weatherDataWeekly = {
     time: string[];
     temperature_2m_min: number[];
     temperature_2m_max: number[];
@@ -43,25 +44,21 @@ type weatherDataWeekly = {
 };
 
 
-function CurrentlyScreen({ city, region, country, lat, lon }: viewProps) {
+function CurrentlyScreen({ city, region, country, lat, lon, error }: viewProps) {
     const [weatherDescription, setWeatherDescription] = useState<string>('');
     const [currentWeather, setCurrentWeather] = useState<currentWeather | null>(null)
-    const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [errorWeather, setErrorWeather] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchWeatherData = async () => {
-            setLoading(true);
-            setError(null);
-
             try {
                 const response = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
                 setCurrentWeather(response.data.current_weather);
                 const description = getWeatherDescription(response.data.current_weather.weathercode)
                 setWeatherDescription(description);
             } catch (err) {
-                console.error('Erreur lors de la récupération des données météo :', err);
-                setError('Unable to fetch weather data');
+                setErrorWeather('Unable to fetch weather data');
             } finally {
                 setLoading(false);
             }
@@ -79,9 +76,11 @@ function CurrentlyScreen({ city, region, country, lat, lon }: viewProps) {
             <Text style={styles.subHeaderText}>{country}</Text>
 
             {loading ? (
-                <ActivityIndicator size="large" color="#0000ff" />
+                <Text>Hello little Sun ! ☀️</Text>
             ) : error ? (
                 <Text>{error}</Text>
+            ) : errorWeather ? (
+                <Text>{errorWeather}</Text>
             ) : (
                 <>
                     <Text>Temperature: {currentWeather?.temperature} °C</Text>
@@ -93,10 +92,10 @@ function CurrentlyScreen({ city, region, country, lat, lon }: viewProps) {
     );
 }
 
-function TodayScreen({ city, region, country, lat, lon }: viewProps) {
+function TodayScreen({ city, region, country, lat, lon, error }: viewProps) {
     const [weatherData, setWeatherData] = useState<weatherData | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
+    const [errorWeather, setErrorWeather] = useState<string | null>(null);
 
     useEffect(() => {
         const today = new Date();
@@ -118,8 +117,7 @@ function TodayScreen({ city, region, country, lat, lon }: viewProps) {
                 const { time, temperature_2m, wind_speed_10m } = response.data.hourly;
                 setWeatherData({ time, temperature_2m, wind_speed_10m });
             } catch (err) {
-                console.error('Erreur lors de la récupération des données météo :', err);
-                setError('Unable to fetch weather data');
+                setErrorWeather('Unable to fetch weather data');
             } finally {
                 setLoading(false);
             }
@@ -145,9 +143,11 @@ function TodayScreen({ city, region, country, lat, lon }: viewProps) {
             <Text style={styles.subHeaderText}>{country}</Text>
 
             {loading ? (
-                <ActivityIndicator size="large" color="#0000ff" />
+                <Text>Hello little Sun ! ☀️</Text>
             ) : error ? (
                 <Text>{error}</Text>
+            ) : errorWeather ? (
+                <Text>{errorWeather}</Text>
             ) : (
                 <FlatList
                     data={weatherData?.time}
@@ -166,10 +166,10 @@ function TodayScreen({ city, region, country, lat, lon }: viewProps) {
     );
 }
 
-function WeeklyScreen({ city, region, country, lat, lon }: viewProps) {
+function WeeklyScreen({ city, region, country, lat, lon, error }: viewProps) {
     const [weatherDataWeekly, setWeatherDataWeekly] = useState<weatherDataWeekly | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
+    const [errorWeather, setErrorWeather] = useState<string | null>(null);
 
     useEffect(() => {
         const today = new Date();
@@ -187,11 +187,9 @@ function WeeklyScreen({ city, region, country, lat, lon }: viewProps) {
                 });
                 const { time, temperature_2m_min, temperature_2m_max, weather_code } = response.data.daily;
                 setWeatherDataWeekly({ time, temperature_2m_min, temperature_2m_max, weather_code });
-                console.log('response ****** \n\n\n', response.data);
 
             } catch (err) {
-                console.error('Erreur lors de la récupération des données météo :', err);
-                setError('Unable to fetch weather data');
+                setErrorWeather('Unable to fetch weather data');
             } finally {
                 setLoading(false);
             }
@@ -218,9 +216,11 @@ function WeeklyScreen({ city, region, country, lat, lon }: viewProps) {
             <Text style={styles.subHeaderText}>{country}</Text>
 
             {loading ? (
-                <ActivityIndicator size="large" color="#0000ff" />
+                <Text>Hello little Sun ! ☀️</Text>
             ) : error ? (
                 <Text>{error}</Text>
+            ) : errorWeather ? (
+                <Text>{errorWeather}</Text>
             ) : (
                 <FlatList
                     data={weatherDataWeekly?.time}
@@ -247,6 +247,7 @@ export default function TabLayout() {
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [coordinates, setCoordinates] = useState<string | null>(null);
     const [city, setCity] = useState('');
+    const [error, setError] = useState('');
     const [country, setCountry] = useState('');
     const [region, setRegion] = useState('');
     const [index, setIndex] = useState(0);
@@ -262,8 +263,7 @@ export default function TabLayout() {
     const fetchGeocodingSuggestions = async (query: string) => {
         try {
             const response = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${query}`);
-            // console.log('*************\n', response.data.results);
-            const results = response.data.results.map((item: any) => ({
+            const results = response.data?.results?.map((item: any) => ({
                 city: item.name,
                 country: item.country,
                 region: item.admin1,
@@ -272,6 +272,10 @@ export default function TabLayout() {
             }));
             setSuggestions(results);
         } catch (error) {
+            setError('Erreur lors de la récupération des données de géocodage');
+            setRegion('');
+            setCountry('');
+            setCity('');
             console.error("Erreur lors de la récupération des données de géocodage :", error);
         }
     };
@@ -301,12 +305,18 @@ export default function TabLayout() {
                     setCity(searchQuery);
                     setCoordinates(`${lat}, ${lon}`);
                     setSuggestions([]);
+                    setError('')
                 } else {
-                    Alert.alert("Aucune ville trouvée", "Nous n'avons pas trouvé cette ville.");
+                    setRegion('');
+                    setCountry('');
+                    setCity('');
+                    setError("Nous n'avons pas trouvé cette ville.");
                 }
             } catch (error) {
-                console.error("Erreur lors de la recherche :", error);
-                Alert.alert("Erreur", "Impossible de récupérer la localisation pour cette ville.");
+                setRegion('');
+                setCountry('');
+                setCity('');
+                setError("Impossible de récupérer la localisation pour cette ville.");
             }
         }
     };
@@ -320,6 +330,7 @@ export default function TabLayout() {
         setCity(city.city);
         setCountry(city.country);
         setRegion(city.region);
+        setError('');
         setSuggestions([]);
     };
 
@@ -357,13 +368,13 @@ export default function TabLayout() {
         switch (route.key) {
             case 'currently':
                 return <CurrentlyScreen searchQuery={searchQuery} coordinates={coordinates} city={city}
-                    country={country} region={region} lat={lat} lon={lon} />;
+                    country={country} region={region} lat={lat} lon={lon} error={error} />;
             case 'today':
                 return <TodayScreen searchQuery={searchQuery} coordinates={coordinates} city={city}
-                    country={country} region={region} lat={lat} lon={lon} />;
+                    country={country} region={region} lat={lat} lon={lon} error={error} />;
             case 'weekly':
                 return <WeeklyScreen searchQuery={searchQuery} coordinates={coordinates} city={city}
-                    country={country} region={region} lat={lat} lon={lon} />;
+                    country={country} region={region} lat={lat} lon={lon} error={error} />;
             default:
                 return null;
         }
