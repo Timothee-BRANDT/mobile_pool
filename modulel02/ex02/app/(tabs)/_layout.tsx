@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, useWindowDimensions, View, Alert, FlatList, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View, Alert, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -19,8 +19,33 @@ export type viewProps = {
     lon: number,
 }
 
+export type currentWeather = {
+    interval: number,
+    is_day: number,
+    temperature: number,
+    time: string,
+    weathercode: number,
+    winddirection: number,
+    windspeed: number,
+}
+
+type weatherData = {
+    time: string[];
+    temperature_2m: number[];
+    wind_speed_10m: number[];
+};
+
+type weatherDataWeekly = {
+    time: string[];
+    temperature_2m_min: number[];
+    temperature_2m_max: number[];
+    weather_code: number[];
+};
+
+
 function CurrentlyScreen({ city, region, country, lat, lon }: viewProps) {
-    const [weatherData, setWeatherData] = useState<any | null>(null);
+    const [weatherDescription, setWeatherDescription] = useState<string>('');
+    const [currentWeather, setCurrentWeather] = useState<currentWeather | null>(null)
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +56,9 @@ function CurrentlyScreen({ city, region, country, lat, lon }: viewProps) {
 
             try {
                 const response = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
-                setWeatherData(response.data);
+                setCurrentWeather(response.data.current_weather);
+                const description = getWeatherDescription(response.data.current_weather.weathercode)
+                setWeatherDescription(description);
             } catch (err) {
                 console.error('Erreur lors de la récupération des données météo :', err);
                 setError('Unable to fetch weather data');
@@ -47,29 +74,49 @@ function CurrentlyScreen({ city, region, country, lat, lon }: viewProps) {
 
     return (
         <View style={styles.container}>
-            <Text>Currently</Text>
-            {loading && <Text>Loading weather data...</Text>}
-            <Text>City : {city}</Text>
-            <Text>Country: {country}</Text>
-            <Text>Region: {region}</Text>
-            {error && <Text>{error}</Text>}
+            <Text style={styles.headerText}>{city}</Text>
+            <Text style={styles.subHeaderText}>{region}</Text>
+            <Text style={styles.subHeaderText}>{country}</Text>
+
+            {loading ? (
+                <ActivityIndicator size="large" color="#0000ff" />
+            ) : error ? (
+                <Text>{error}</Text>
+            ) : (
+                <>
+                    <Text>Temperature: {currentWeather?.temperature} °C</Text>
+                    <Text>Weather description: {weatherDescription}</Text>
+                    <Text>Wind speed: {currentWeather?.windspeed} km/h</Text>
+                </>
+            )}
         </View>
     );
 }
 
 function TodayScreen({ city, region, country, lat, lon }: viewProps) {
-    const [weatherData, setWeatherData] = useState<any | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
+    const [weatherData, setWeatherData] = useState<weatherData | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchWeatherData = async () => {
-            setLoading(true);
-            setError(null);
+        const today = new Date();
+        const start = today.toISOString().split("T")[0];
+        const end = start;
 
+        const fetchWeatherData = async () => {
             try {
-                const response = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
-                setWeatherData(response.data);
+                const response = await axios.get(`https://api.open-meteo.com/v1/forecast`, {
+                    params: {
+                        latitude: lat,
+                        longitude: lon,
+                        hourly: "temperature_2m,wind_speed_10m,weather_code",
+                        start_date: start,
+                        end_date: end
+                    }
+                });
+
+                const { time, temperature_2m, wind_speed_10m } = response.data.hourly;
+                setWeatherData({ time, temperature_2m, wind_speed_10m });
             } catch (err) {
                 console.error('Erreur lors de la récupération des données météo :', err);
                 setError('Unable to fetch weather data');
@@ -83,31 +130,65 @@ function TodayScreen({ city, region, country, lat, lon }: viewProps) {
         }
     }, [lat, lon]);
 
+    const renderWeatherItem = ({ item, index }: { item: string; index: number }) => (
+        <View style={styles.weatherRow}>
+            <Text style={styles.weatherText}>{item.split("T")[1].slice(0, 5)}</Text>
+            <Text style={styles.weatherText}>{weatherData?.temperature_2m[index]}°C</Text>
+            <Text style={styles.weatherText}>{weatherData?.wind_speed_10m[index]} km/h</Text>
+        </View>
+    );
+
     return (
         <View style={styles.container}>
-            <Text>Today</Text>
-            {loading && <Text>Loading weather data...</Text>}
-            <Text>City : {city}</Text>
-            <Text>Country: {country}</Text>
-            <Text>Region: {region}</Text>
-            {error && <Text>{error}</Text>}
+            <Text style={styles.headerText}>{city}</Text>
+            <Text style={styles.subHeaderText}>{region}</Text>
+            <Text style={styles.subHeaderText}>{country}</Text>
+
+            {loading ? (
+                <ActivityIndicator size="large" color="#0000ff" />
+            ) : error ? (
+                <Text>{error}</Text>
+            ) : (
+                <FlatList
+                    data={weatherData?.time}
+                    renderItem={renderWeatherItem}
+                    keyExtractor={(item) => item}
+                    ListHeaderComponent={() => (
+                        <View style={styles.weatherRow}>
+                            <Text style={styles.weatherText}>Time</Text>
+                            <Text style={styles.weatherText}>Temp</Text>
+                            <Text style={styles.weatherText}>Wind</Text>
+                        </View>
+                    )}
+                />
+            )}
         </View>
     );
 }
 
 function WeeklyScreen({ city, region, country, lat, lon }: viewProps) {
-    const [weatherData, setWeatherData] = useState<any | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
+    const [weatherDataWeekly, setWeatherDataWeekly] = useState<weatherDataWeekly | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchWeatherData = async () => {
-            setLoading(true);
-            setError(null);
+        const today = new Date();
+        const start = today.toISOString().split("T")[0];
+        const end = start;
 
+        const fetchWeatherData = async () => {
             try {
-                const response = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
-                setWeatherData(response.data);
+                const response = await axios.get(`https://api.open-meteo.com/v1/forecast`, {
+                    params: {
+                        latitude: lat,
+                        longitude: lon,
+                        daily: "temperature_2m_max,temperature_2m_min,weather_code,"
+                    }
+                });
+                const { time, temperature_2m_min, temperature_2m_max, weather_code } = response.data.daily;
+                setWeatherDataWeekly({ time, temperature_2m_min, temperature_2m_max, weather_code });
+                console.log('response ****** \n\n\n', response.data);
+
             } catch (err) {
                 console.error('Erreur lors de la récupération des données météo :', err);
                 setError('Unable to fetch weather data');
@@ -121,14 +202,40 @@ function WeeklyScreen({ city, region, country, lat, lon }: viewProps) {
         }
     }, [lat, lon]);
 
+    const renderWeatherItem = ({ item, index }: { item: string; index: number }) => (
+        <View style={styles.weatherRow}>
+            <Text style={styles.weatherText}>{weatherDataWeekly?.time[index]}</Text>
+            <Text style={styles.weatherText}>{weatherDataWeekly?.temperature_2m_min[index]}°C</Text>
+            <Text style={styles.weatherText}>{weatherDataWeekly?.temperature_2m_max[index]}°C</Text>
+            <Text style={styles.weatherText}>{getWeatherDescription(weatherDataWeekly?.weather_code[index])}</Text>
+        </View>
+    );
+
     return (
         <View style={styles.container}>
-            <Text>Weekly</Text>
-            {loading && <Text>Loading weather data...</Text>}
-            <Text>City : {city}</Text>
-            <Text>Country: {country}</Text>
-            <Text>Region: {region}</Text>
-            {error && <Text>{error}</Text>}
+            <Text style={styles.headerText}>{city}</Text>
+            <Text style={styles.subHeaderText}>{region}</Text>
+            <Text style={styles.subHeaderText}>{country}</Text>
+
+            {loading ? (
+                <ActivityIndicator size="large" color="#0000ff" />
+            ) : error ? (
+                <Text>{error}</Text>
+            ) : (
+                <FlatList
+                    data={weatherDataWeekly?.time}
+                    renderItem={renderWeatherItem}
+                    keyExtractor={(item) => item}
+                    ListHeaderComponent={() => (
+                        <View style={styles.weatherRow}>
+                            <Text style={styles.weatherText}>Date</Text>
+                            <Text style={styles.weatherText}>Temp min</Text>
+                            <Text style={styles.weatherText}>Temp max</Text>
+                            <Text style={styles.weatherText}>Description</Text>
+                        </View>
+                    )}
+                />
+            )}
         </View>
     );
 }
@@ -321,13 +428,65 @@ export default function TabLayout() {
     );
 }
 
+function getWeatherDescription(code: number | undefined): string {
+    if (code === undefined) {
+        return "Unknown weather code";
+    }
+    const weatherCodes: { [key: string]: string[] } = {
+        "0": ["Clear sky"],
+        "1,2,3": ["Mainly clear", "Partly cloudy", "Overcast"],
+        "45,48": ["Fog", "Depositing rime fog"],
+        "51,53,55": ["Drizzle: light", "Drizzle: moderate", "Drizzle: dense"],
+        "56,57": ["Freezing drizzle: light", "Freezing drizzle: dense"],
+        "61,63,65": ["Rain: slight", "Rain: moderate", "Rain: heavy"],
+        "66,67": ["Freezing rain: light", "Freezing rain: heavy"],
+        "71,73,75": ["Snow fall: slight", "Snow fall: moderate", "Snow fall: heavy"],
+        "77": ["Snow grains"],
+        "80,81,82": ["Rain showers: slight", "Rain showers: moderate", "Rain showers: violent"],
+        "85,86": ["Snow showers: slight", "Snow showers: heavy"],
+        "95": ["Thunderstorm: slight or moderate"],
+        "96,99": ["Thunderstorm with slight hail", "Thunderstorm with heavy hail"]
+    };
+
+    for (const key in weatherCodes) {
+        const codes = key.split(",").map(Number);
+        const index = codes.indexOf(code);
+        if (index !== -1) {
+            return weatherCodes[key][index];
+        }
+    }
+
+    return "Unknown weather code";
+}
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
+        padding: 20,
         alignItems: 'center',
     },
     searchbar: {
         flex: 1,
     },
+    headerText: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 5,
+    },
+    subHeaderText: {
+        fontSize: 16,
+        color: 'gray',
+        marginBottom: 20,
+    },
+    weatherRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ddd',
+    },
+    weatherText: {
+        fontSize: 16,
+    }
 });
