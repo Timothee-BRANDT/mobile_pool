@@ -6,25 +6,25 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
 export default function HomeScreen() {
-    const clicked =  () => {
-        console.log("Button pressed");
+    const clicked = () => {
+
     }
 
-  return (
-    <View style={styles.container}>
-      <ThemedText style={styles.title}>Foo Bar</ThemedText>
-      <Button title="Try me" onPress={clicked}></Button>
-    </View>
-  );
+    return (
+        <View style={styles.container}>
+            <ThemedText style={styles.title}>Foo Bar</ThemedText>
+            <Button title="Try me" onPress={clicked}></Button>
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 24,
-  },
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    title: {
+        fontSize: 24,
+    },
 });

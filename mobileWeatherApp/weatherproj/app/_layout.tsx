@@ -45,7 +45,7 @@ export default function RootLayout() {
                 <IconButton
                     icon="crosshairs-gps"
                     size={24}
-                    onPress={() => console.log('Geolocation button pressed')}
+                    onPress={() => 
                 />
             </Appbar.Header>
             <Stack>

@@ -270,7 +270,9 @@ export default function TabLayout() {
                 lat: item.latitude,
                 lon: item.longitude,
             }));
-            setSuggestions(results);
+            if (results && results.length > 0) {
+                setSuggestions(results.slice(0, 5));
+            }
         } catch (error) {
             setError('Erreur lors de la récupération des données de géocodage');
             setRegion('');
@@ -397,18 +399,20 @@ export default function TabLayout() {
                 />
             </Appbar.Header>
 
-            <FlatList
-                data={suggestions}
-                keyExtractor={(item) => `${item.city}-${item.lat}-${item.lon}`}
-                renderItem={({ item }) => (
-                    <TouchableOpacity onPress={() => handleCitySelect(item)}>
-                        <List.Item
-                            title={item.city}
-                            description={`${item.country}, ${item.region}`}
-                        />
-                    </TouchableOpacity>
-                )}
-            />
+            <View style={styles.searchResultsContainer}>
+                <FlatList
+                    data={suggestions}
+                    keyExtractor={(item) => `${item.city}-${item.lat}-${item.lon}`}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity onPress={() => handleCitySelect(item)}>
+                            <List.Item
+                                title={item.city}
+                                description={`${item.country}, ${item.region}`}
+                            />
+                        </TouchableOpacity>
+                    )}
+                />
+            </View>
 
 
             <TabView
@@ -471,6 +475,20 @@ function getWeatherDescription(code: number | undefined): string {
 }
 
 const styles = StyleSheet.create({
+    searchResultsContainer: {
+        position: 'absolute',
+        top: 80,
+        left: 10,
+        right: 10,
+        backgroundColor: '#fff',
+        borderRadius: 5,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        zIndex: 3,
+    },
     container: {
         flex: 1,
         padding: 20,

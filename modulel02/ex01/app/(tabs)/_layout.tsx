@@ -84,7 +84,6 @@ export default function TabLayout() {
     const fetchGeocodingSuggestions = async (query: string) => {
         try {
             const response = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${query}`);
-            console.log('*************\n', response.data.results);
             const results = response.data.results.map((item: any) => ({
                 city: item.name,
                 country: item.country,
@@ -92,7 +91,7 @@ export default function TabLayout() {
                 lat: item.latitude,
                 lon: item.longitude,
             }));
-            setSuggestions(results);
+            setSuggestions(results.slice(0, 5));
         } catch (error) {
             console.error("Erreur lors de la récupération des données de géocodage :", error);
         }
@@ -183,18 +182,21 @@ export default function TabLayout() {
                 />
             </Appbar.Header>
 
-            <FlatList
-                data={suggestions}
-                keyExtractor={(item) => `${item.city}-${item.lat}-${item.lon}`}
-                renderItem={({ item }) => (
-                    <TouchableOpacity onPress={() => handleCitySelect(item)}>
-                        <List.Item
-                            title={item.city}
-                            description={`${item.country}, ${item.region}`}
-                        />
-                    </TouchableOpacity>
-                )}
-            />
+            <View style={styles.searchResultsContainer}>
+                <FlatList
+                    data={suggestions}
+                    keyExtractor={(item) => `${item.city}-${item.lat}-${item.lon}`}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity onPress={() => handleCitySelect(item)}>
+                            <List.Item
+                                title={item.city}
+                                description={`${item.country}, ${item.region}`}
+                            />
+                        </TouchableOpacity>
+                    )}
+                />
+            </View>
+
 
 
             <TabView
@@ -226,6 +228,20 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+    searchResultsContainer: {
+        position: 'absolute',
+        top: 80,
+        left: 10,
+        right: 10,
+        backgroundColor: '#fff',
+        borderRadius: 5,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        zIndex: 3,
+    },
     container: {
         flex: 1,
         justifyContent: 'center',

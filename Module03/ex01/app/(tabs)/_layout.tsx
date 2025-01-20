@@ -433,28 +433,20 @@ export default function TabLayout() {
                 />
             </Appbar.Header>
 
-            <FlatList
-                data={suggestions}
-                keyExtractor={(item) => `${item.city}-${item.lat}-${item.lon}`}
-                style={{
-                    position: 'absolute', // Permet de superposer
-                    top: 80, // Ajustez cette valeur pour qu'elle se trouve sous la barre de recherche
-                    left: 10,
-                    right: 10,
-                    zIndex: 10, // Assurez-vous que la liste est au premier plan
-                    // backgroundColor: 'white',
-                    borderRadius: 10,
-                    padding: 10,
-                }}
-                renderItem={({ item }) => (
-                    <TouchableOpacity onPress={() => handleCitySelect(item)}>
-                        <List.Item
-                            title={item.city}
-                            description={`${item.country}, ${item.region}`}
-                        />
-                    </TouchableOpacity>
-                )}
-            />
+            <View style={styles.searchResultsContainer}>
+                <FlatList
+                    data={suggestions}
+                    keyExtractor={(item) => `${item.city}-${item.lat}-${item.lon}`}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity onPress={() => handleCitySelect(item)}>
+                            <List.Item
+                                title={item.city}
+                                description={`${item.country}, ${item.region}`}
+                            />
+                        </TouchableOpacity>
+                    )}
+                />
+            </View>
 
 
 
@@ -523,6 +515,20 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 50,
+    },
+    searchResultsContainer: {
+        position: 'absolute',
+        top: 80,
+        left: 10,
+        right: 10,
+        backgroundColor: '#fff',
+        borderRadius: 5,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        zIndex: 3,
     },
     container: {
         flex: 1,
