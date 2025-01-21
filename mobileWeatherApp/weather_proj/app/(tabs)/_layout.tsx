@@ -5,6 +5,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Appbar, IconButton, Searchbar } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 function CurrentlyScreen({ searchQuery }: { searchQuery: string }) {
     return (
@@ -59,7 +60,7 @@ export default function TabLayout() {
     };
 
     return (
-        <>
+        <SafeAreaView style={{ flex: 1 }}>
             <Appbar.Header>
                 <Searchbar
                     placeholder="Search location"
@@ -97,7 +98,7 @@ export default function TabLayout() {
                 )}
                 tabBarPosition="bottom"
             />
-        </>
+        </SafeAreaView>
     );
 }
 

@@ -13,9 +13,20 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.misscoding.googleauthexporeactnative",
+      "supportsTablet": true,
+      "infoPlist" : {
+        "CFBundleURLTypes" : [
+            {
+                "CFBundleURLSchemes" : [
+                    "com.googleusercontent.apps.846524925740-74qiamsh2evf0pm68cke5ik0plaf0qgo"
+                ]
+            }
+        ]
+      }
     },
     "android": {
+      "package": "com.misscoding.googleauthexporeactnative",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
