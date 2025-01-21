@@ -7,7 +7,7 @@ import { ThemedView } from '@/components/ThemedView';
 
 export default function HomeScreen() {
     const clicked = () => {
-
+        console.log("Button pressed")
     }
 
     return (

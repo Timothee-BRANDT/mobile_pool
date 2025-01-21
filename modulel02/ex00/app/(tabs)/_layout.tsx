@@ -5,7 +5,6 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Appbar, IconButton, Searchbar } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
-// expo-location is native API that uses GPS phone
 import * as Location from 'expo-location';
 
 function CurrentlyScreen({ searchQuery, coordinates }: { searchQuery: string, coordinates: string | null }) {
@@ -51,20 +50,6 @@ export default function TabLayout() {
     ]);
 
     const [coordinates, setCoordinates] = useState<string | null>(null);
-
-    useEffect(() => {
-        (async () => {
-            let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                Alert.alert("Permission denied", "Location access denied. You can enter a city manually.");
-                return;
-            }
-
-            let location = await Location.getCurrentPositionAsync({});
-            const coords = `${location.coords.latitude}, ${location.coords.longitude}`;
-            setCoordinates(coords);
-        })();
-    }, []);
 
     const handleGeolocationPress = async () => {
         let { status } = await Location.requestForegroundPermissionsAsync();

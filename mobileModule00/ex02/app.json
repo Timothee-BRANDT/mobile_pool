@@ -1,9 +1,9 @@
-{
+  {
   "expo": {
     "name": "ex00",
     "slug": "ex00",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
