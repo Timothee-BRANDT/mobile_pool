@@ -1,29 +1,39 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { DiaryProvider } from '../DiaryContext';
 
 export default function TabLayout() {
   return (
-    <Tabs>
-      <Tabs.Screen
-        name="index" 
-        options={{
-          tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" color={color} size={size} />
-          ),
-          headerShown: false,
-        }}
-      />
-      <Tabs.Screen
-        name="agenda"
-        options={{
-          tabBarLabel: 'Agenda',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar" color={color} size={size} />
-          ),
-          headerShown: false,
-        }}
-      />
-    </Tabs>
+    <DiaryProvider>
+      <Tabs>
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="home" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="profilePage"
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="person" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="agenda"
+          options={{
+            title: 'Agenda',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="calendar" size={size} color={color} />
+            ),
+          }}
+        />
+      </Tabs>
+    </DiaryProvider>
   );
 }

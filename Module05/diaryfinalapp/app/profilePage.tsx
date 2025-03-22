@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -12,9 +12,8 @@ import {
 import * as Linking from 'expo-linking';
 import { useAuth, useClerk, useUser } from '@clerk/clerk-react';
 import { Stack } from 'expo-router';
-import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
 import DiaryItem from './DiaryItem';
+import { useDiary } from './DiaryContext';
 
 export interface diaryType {
   date: string;
@@ -29,7 +28,7 @@ function formatIsoToDdMmYyyy(isoString: string): string {
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
-  
+
   return `${day}/${month}/${year}`;
 }
 
@@ -37,15 +36,11 @@ export default function ProfilePage() {
   const { isSignedIn } = useAuth();
   const { signOut } = useClerk();
   const { user } = useUser();
-
-  const [diarys, setDiarys] = useState<(diaryType & { id: string })[]>([]);
-  const [firstLoad, setFirstLoad] = useState(true);
-
+  const { diarys, deleteDiary, addDiary } = useDiary();
   const [modalVisible, setModalVisible] = useState(false);
   const [newDiaryTitle, setNewDiaryTitle] = useState('');
   const [newDiaryText, setNewDiaryText] = useState('');
   const [newDiaryIcon, setNewDiaryIcon] = useState('happy');
-
   const [selectedDiary, setSelectedDiary] = useState<(diaryType & { id: string }) | null>(null);
 
   const userEmail = user?.fullName || 'No user name found';
@@ -59,82 +54,36 @@ export default function ProfilePage() {
     }
   };
 
-  const getAllDiarys = async (): Promise<(diaryType & { id: string })[]> => {
-    try {
-      const results: (diaryType & { id: string })[] = [];
-      const snapshot = await getDocs(collection(db, 'users'));
-      snapshot.forEach((docSnap) => {
-        results.push({
-          id: docSnap.id,
-          ...(docSnap.data() as diaryType),
-        });
-      });
-      return results;
-    } catch (e) {
-      console.error('Error reading document: ', e);
-      return [];
-    }
-  };
-
   const handleAddDiary = async () => {
-    try {
-      await addDoc(collection(db, 'users'), {
-        date: new Date().toISOString(),
-        icon: newDiaryIcon,
-        text: newDiaryText,
-        title: newDiaryTitle,
-        usermail: user?.primaryEmailAddress?.emailAddress || 'No user mail found',
-      });
-      const updated = await getAllDiarys();
-      setDiarys(updated);
-
-      setNewDiaryTitle('');
-      setNewDiaryText('');
-      setNewDiaryIcon('happy');
-      setModalVisible(false);
-    } catch (e) {
-      console.error('Error adding document: ', e);
-    }
+    await addDiary({
+      date: new Date().toISOString(),
+      icon: newDiaryIcon,
+      text: newDiaryText,
+      title: newDiaryTitle,
+    });
+    setNewDiaryTitle('');
+    setNewDiaryText('');
+    setNewDiaryIcon('happy');
+    setModalVisible(false);
   };
 
   const handleDeleteDiary = async (diaryId: string) => {
-    try {
-      await deleteDoc(doc(db, 'users', diaryId));
-      const updated = await getAllDiarys();
-      setDiarys(updated);
-      setSelectedDiary(null);
-    } catch (error) {
-      console.error('Error deleting diary: ', error);
-    }
+    await deleteDiary(diaryId);
+    setSelectedDiary(null);
   };
 
-  const fetchDiaries = useCallback(async () => {
-    const diaryEntries = await getAllDiarys();
-    setDiarys(diaryEntries);
-  }, []);
-
-  useEffect(() => {
-    if (firstLoad) {
-      fetchDiaries();
-      setFirstLoad(false);
-    }
-  }, [firstLoad, fetchDiaries]);
-
-  const handlePressDiary = (diary: (diaryType & { id: string })) => {
+  const handlePressDiary = (diary: diaryType & { id: string }) => {
     setSelectedDiary(diary);
   };
 
-
-  const sortedByDate = [...diarys].sort(
-    (a, b) => +new Date(b.date) - +new Date(a.date)
-  );
+  const sortedByDate = [...diarys].sort((a, b) => +new Date(b.date) - +new Date(a.date));
   const lastTwo = sortedByDate.slice(0, 2);
 
   const totalEntries = diarys.length;
 
-  const happyCount = diarys.filter(d => d.icon === 'happy').length;
-  const neutralCount = diarys.filter(d => d.icon === 'neutral').length;
-  const unhappyCount = diarys.filter(d => d.icon === 'unhappy').length;
+  const happyCount = diarys.filter((d) => d.icon === 'happy').length;
+  const neutralCount = diarys.filter((d) => d.icon === 'neutral').length;
+  const unhappyCount = diarys.filter((d) => d.icon === 'unhappy').length;
   const happyPercent = totalEntries > 0 ? ((happyCount / totalEntries) * 100).toFixed(1) : '0';
   const neutralPercent = totalEntries > 0 ? ((neutralCount / totalEntries) * 100).toFixed(1) : '0';
   const unhappyPercent = totalEntries > 0 ? ((unhappyCount / totalEntries) * 100).toFixed(1) : '0';
@@ -163,14 +112,14 @@ export default function ProfilePage() {
 
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Last 2 entries</Text>
-                      <FlatList
-            data={lastTwo}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <DiaryItem diary={item} onPress={() => handlePressDiary(item)} />
-            )}
-            scrollEnabled={false}
-          />
+            <FlatList
+              data={lastTwo}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <DiaryItem diary={item} onPress={() => handlePressDiary(item)} />
+              )}
+              scrollEnabled={false}
+            />
           </View>
 
           <View style={styles.sectionContainer}>
@@ -299,7 +248,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f4f7',
   },
   contentWrapper: {
-    padding: 16,
+    padding: 4,
     paddingBottom: 32,
   },
   mainTitle: {
@@ -343,7 +292,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 4,
-    marginTop: 16,
     alignSelf: 'center',
   },
   buttonText: {
