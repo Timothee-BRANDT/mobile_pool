@@ -10,7 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import * as Linking from 'expo-linking';
-import { useAuth, useClerk } from '@clerk/clerk-react';
+import { useAuth, useClerk, useUser } from '@clerk/clerk-react';
 import { Stack } from 'expo-router';
 import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
@@ -36,6 +36,7 @@ function formatIsoToDdMmYyyy(isoString: string): string {
 export default function ProfilePage() {
   const { isSignedIn } = useAuth();
   const { signOut } = useClerk();
+  const { user } = useUser();
 
   const [diarys, setDiarys] = useState<(diaryType & { id: string })[]>([]);
   const [firstLoad, setFirstLoad] = useState(true);
@@ -46,6 +47,8 @@ export default function ProfilePage() {
   const [newDiaryIcon, setNewDiaryIcon] = useState('happy');
 
   const [selectedDiary, setSelectedDiary] = useState<(diaryType & { id: string }) | null>(null);
+
+  const userEmail = user?.fullName || 'No user name found';
 
   const handleSignOut = async () => {
     try {
@@ -80,7 +83,7 @@ export default function ProfilePage() {
         icon: newDiaryIcon,
         text: newDiaryText,
         title: newDiaryTitle,
-        usermail: 'mail@example.com',
+        usermail: user?.primaryEmailAddress?.emailAddress || 'No user mail found',
       });
       const updated = await getAllDiarys();
       setDiarys(updated);
@@ -121,7 +124,6 @@ export default function ProfilePage() {
     setSelectedDiary(diary);
   };
 
-  const userEmail = diarys.length > 0 ? diarys[0].usermail : 'No user mail found';
 
   const sortedByDate = [...diarys].sort(
     (a, b) => +new Date(b.date) - +new Date(a.date)
@@ -150,19 +152,19 @@ export default function ProfilePage() {
           )}
 
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>User Email</Text>
+            <Text style={styles.sectionTitle}>User name</Text>
             <Text style={styles.sectionValue}>{userEmail}</Text>
           </View>
 
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Total Entries</Text>
+            <Text style={styles.sectionTitle}>Total entries</Text>
             <Text style={styles.sectionValue}>{totalEntries}</Text>
           </View>
 
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Last 2 Entries</Text>
+            <Text style={styles.sectionTitle}>Last 2 entries</Text>
                       <FlatList
-            data={diarys}
+            data={lastTwo}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <DiaryItem diary={item} onPress={() => handlePressDiary(item)} />
@@ -172,7 +174,7 @@ export default function ProfilePage() {
           </View>
 
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Feeling Usage</Text>
+            <Text style={styles.sectionTitle}>Feeling usage</Text>
             <Text style={styles.sectionValue}>Happy: {happyPercent}%</Text>
             <Text style={styles.sectionValue}>Neutral: {neutralPercent}%</Text>
             <Text style={styles.sectionValue}>Unhappy: {unhappyPercent}%</Text>
