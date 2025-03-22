@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,14 +6,13 @@ import {
   FlatList,
   TouchableOpacity,
   Modal,
-  ScrollView,
 } from 'react-native';
 import { Calendar, CalendarProps } from 'react-native-calendars';
 import { Stack } from 'expo-router';
-import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
 import DiaryItem from '../DiaryItem';
 import { diaryType } from '../profilePage';
+import { useDiary } from '../DiaryContext';
+import { useAuth } from '@clerk/clerk-react';
 
 function formatIsoToDdMmYyyy(isoString: string): string {
   const date = new Date(isoString);
@@ -33,45 +32,9 @@ function formatDateToYYYYMMDD(date: Date): string {
 
 export default function AgendaPage() {
   const [selectedDate, setSelectedDate] = useState<string>(formatDateToYYYYMMDD(new Date()));
-  const [diarys, setDiarys] = useState<(diaryType & { id: string })[]>([]);
   const [selectedDiary, setSelectedDiary] = useState<(diaryType & { id: string }) | null>(null);
-
-  const getAllDiarys = async (): Promise<(diaryType & { id: string })[]> => {
-    try {
-      const results: (diaryType & { id: string })[] = [];
-      const snapshot = await getDocs(collection(db, 'users'));
-      snapshot.forEach((docSnap) => {
-        results.push({
-          id: docSnap.id,
-          ...(docSnap.data() as diaryType),
-        });
-      });
-      return results;
-    } catch (e) {
-      console.error('Error reading document: ', e);
-      return [];
-    }
-  };
-
-  const handleDeleteDiary = async (diaryId: string) => {
-    try {
-      await deleteDoc(doc(db, 'users', diaryId));
-      const updated = await getAllDiarys();
-      setDiarys(updated);
-      setSelectedDiary(null);
-    } catch (error) {
-      console.error('Error deleting diary: ', error);
-    }
-  };
-
-  const fetchDiaries = useCallback(async () => {
-    const diaryEntries = await getAllDiarys();
-    setDiarys(diaryEntries);
-  }, []);
-
-  useEffect(() => {
-    fetchDiaries();
-  }, [fetchDiaries]);
+  const { diarys, deleteDiary } = useDiary();
+  const { isSignedIn } = useAuth();
 
   const handleDayPress = (day: CalendarProps['onDayPress']) => {
     if (day && day.dateString) {
@@ -81,6 +44,11 @@ export default function AgendaPage() {
 
   const handlePressDiary = (diary: diaryType & { id: string }) => {
     setSelectedDiary(diary);
+  };
+
+  const handleDeleteDiary = async (diaryId: string) => {
+    await deleteDiary(diaryId);
+    setSelectedDiary(null);
   };
 
   const filteredDiarys = diarys.filter((diary) => {
@@ -93,7 +61,7 @@ export default function AgendaPage() {
     );
   });
 
-  return (
+  return isSignedIn ? (
     <>
       <Stack.Screen options={{ title: 'Agenda' }} />
       <View style={styles.container}>
@@ -157,6 +125,10 @@ export default function AgendaPage() {
         </View>
       </Modal>
     </>
+  ) : (
+    <View style={styles.containerNotSigned}>
+      <Text>You must sign in to access this page</Text>
+    </View>
   );
 }
 
@@ -164,6 +136,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f0f4f7',
+  },
+  containerNotSigned: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   listContainer: {
     flex: 1,
