@@ -1,20 +1,15 @@
-// DiaryItem.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-
-// If you have your custom icons:
 import HappyIcon from './HappyIcon';
 import UnhappyIcon from './UnhappyIcon';
 import NeutralIcon from './NeutralIcon';
-
-// Adjust import to wherever your 'diaryType' is defined:
 import { diaryType } from './profilePage';
 
 type ExtendedDiary = diaryType & { id: string };
 
 type Props = {
   diary: ExtendedDiary;
-  onPress: () => void; // We'll trigger this when the item is tapped
+  onPress: () => void;
 };
 
 export default function DiaryItem({ diary, onPress }: Props) {
@@ -29,15 +24,12 @@ export default function DiaryItem({ diary, onPress }: Props) {
   return `${day}/${month}/${year}`;
 }
 
-  // Decide which icon to display
   const renderIcon = () => {
     switch (icon) {
       case 'happy':
         return <HappyIcon />;
       case 'unhappy':
         return <UnhappyIcon />;
-      case 'neutral':
-        return <NeutralIcon />;
       default:
         return <NeutralIcon />;
     }
@@ -45,15 +37,10 @@ export default function DiaryItem({ diary, onPress }: Props) {
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
-      {/* The date part */}
       <View style={styles.dateSection}>
-        <Text style={styles.dateText}>{formatIsoToDdMmYyyy(date)}</Text>
+        <Text>{formatIsoToDdMmYyyy(date)}</Text>
       </View>
-
-      {/* The icon */}
       <View style={styles.iconSection}>{renderIcon()}</View>
-
-      {/* The text/title section */}
       <View style={styles.textSection}>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.body}>{text}</Text>
@@ -74,9 +61,6 @@ const styles = StyleSheet.create({
   dateSection: {
     width: 80,
     alignItems: 'center',
-  },
-  dateText: {
-    fontWeight: 'bold',
   },
   iconSection: {
     width: 50,

@@ -1,4 +1,3 @@
-// app/index.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Button, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { useOAuth } from '@clerk/clerk-expo';
@@ -91,6 +90,5 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#000',
-    fontWeight: 'bold',
   },
 });

@@ -14,6 +14,9 @@ import { Stack } from 'expo-router';
 import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import DiaryItem from './DiaryItem';
+import HappyIcon from './HappyIcon';
+import UnhappyIcon from './UnhappyIcon';
+import NeutralIcon from './NeutralIcon';
 
 export interface diaryType {
   date: string;
@@ -32,10 +35,23 @@ function formatIsoToDdMmYyyy(isoString: string): string {
   return `${day}/${month}/${year}`;
 }
 
+  const renderIcon = (icon: string) => {
+    switch (icon) {
+      case 'happy':
+        return <HappyIcon />;
+      case 'unhappy':
+        return <UnhappyIcon />;
+      default:
+        return <NeutralIcon />;
+    }
+  };
+
+
 export default function ProfilePage() {
   const { isSignedIn } = useAuth();
   const { signOut } = useClerk();
 
+  // [{id : {diaryType}}] array of map
   const [diarys, setDiarys] = useState<(diaryType & { id: string })[]>([]);
   const [firstLoad, setFirstLoad] = useState<boolean>(true);
 
@@ -121,7 +137,7 @@ export default function ProfilePage() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Oops!' }} />
+      <Stack.Screen options={{ title: 'DiaryApp' }} />
       <View style={styles.container}>
         {isSignedIn && (
           <TouchableOpacity style={styles.button} onPress={handleSignOut}>
@@ -220,7 +236,7 @@ export default function ProfilePage() {
                   <Text style={styles.modalTitle}>Diary Details</Text>
                   <Text style={styles.label}>Title: {selectedDiary.title}</Text>
                   <Text style={styles.label}>Text: {selectedDiary.text}</Text>
-                  <Text style={styles.label}>Icon: {selectedDiary.icon}</Text>
+                  {renderIcon(selectedDiary.icon)}
                   <Text style={styles.label}>
                     Date: {formatIsoToDdMmYyyy(selectedDiary.date)}
                   </Text>
@@ -257,7 +273,6 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   title: {
-    fontWeight: 'bold',
     fontSize: 20,
     marginBottom: 16,
   },
@@ -270,7 +285,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#000',
-    fontWeight: 'bold',
     textAlign: 'center',
   },
   modalBackground: {

@@ -9,12 +9,9 @@ export default function UnhappyIcon({ size = 24, color = '#000' }: { size?: numb
       viewBox="0 0 24 24"
       fill="none"
     >
-      {/* Face outline */}
       <Circle cx={12} cy={12} r={10} stroke={color} strokeWidth={2} />
-      {/* Eyes */}
       <Circle cx={9} cy={10} r={1} fill={color} />
       <Circle cx={15} cy={10} r={1} fill={color} />
-      {/* Frown */}
       <Path
         d="M8 16c1.5 -1 3 -1 4 -1s2.5 0 4 1"
         stroke={color}
